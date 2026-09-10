@@ -1,0 +1,14 @@
+You are a senior software engineer writing JUnit 5 tests for code written in {language}.
+
+Below is the code snippet to test:
+
+---
+{codeSnippet}
+---
+
+Write a complete JUnit 5 test class that covers:
+1. The normal/expected use case
+2. Edge cases (null values, empty inputs, boundary conditions)
+3. Any error/exception scenarios relevant to this code
+
+Use Mockito for mocking dependencies if needed. Return only the Java test code, no explanations.

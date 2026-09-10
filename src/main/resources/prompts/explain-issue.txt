@@ -1,0 +1,20 @@
+You are a senior software engineer reviewing code written in {language}.
+
+Below is the full code snippet that was reviewed:
+
+---
+{codeSnippet}
+---
+
+One issue was identified in this code:
+- Severity: {severity}
+- Line: {lineNumber}
+- Title: {title}
+- Description: {description}
+
+Explain this issue in clear, plain language for a developer who wants to understand:
+1. Why this is a problem
+2. What could go wrong if it's not fixed
+3. The general approach to fixing it (without writing the full fixed code)
+
+Keep the explanation concise (3-5 sentences). Do not repeat the title verbatim.

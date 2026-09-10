@@ -1,0 +1,162 @@
+package com.scrutinyai.service;
+
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+
+import com.scrutinyai.ai.AiCodeReviewService;
+import com.scrutinyai.ai.AiReviewResult;
+import com.scrutinyai.dto.AiFixResponse;
+import com.scrutinyai.dto.GeneratedTestResponse;
+import com.scrutinyai.dto.IssueResponse;
+import com.scrutinyai.dto.ReviewRequest;
+import com.scrutinyai.dto.ReviewResponse;
+import com.scrutinyai.entity.AiFix;
+import com.scrutinyai.entity.GeneratedTest;
+import com.scrutinyai.entity.Issue;
+import com.scrutinyai.entity.Review;
+import com.scrutinyai.entity.User;
+import com.scrutinyai.enums.IssueSeverity;
+import com.scrutinyai.enums.ReviewStatus;
+import com.scrutinyai.repository.AiFixRepository;
+import com.scrutinyai.repository.GeneratedTestRepository;
+import com.scrutinyai.repository.IssueRepository;
+import com.scrutinyai.repository.ReviewRepository;
+import com.scrutinyai.repository.UserRepository;
+
+import lombok.RequiredArgsConstructor;
+
+@Service
+@RequiredArgsConstructor
+public class ReviewService {
+
+    private final ReviewRepository reviewRepository;
+    private final IssueRepository issueRepository;
+    private final UserRepository userRepository;
+    private final AiCodeReviewService aiCodeReviewService;
+    private final AiFixRepository aiFixRepository;
+    private final GeneratedTestRepository generatedTestRepository;
+
+    public ReviewResponse createReview(ReviewRequest request, String userEmail) {
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new IllegalStateException("Kullanıcı bulunamadı"));
+
+        Review review = Review.builder()
+                .language(request.language())
+                .codeSnippet(request.codeSnippet())
+                .status(ReviewStatus.PROCESSING)
+                .user(user)
+                .build();
+        review = reviewRepository.save(review);
+
+        try {
+            AiReviewResult aiResult = aiCodeReviewService.reviewCode(request.language(), request.codeSnippet());
+
+            review.setScore(aiResult.score());
+            review.setAiSummary(aiResult.summary());
+            review.setStatus(ReviewStatus.COMPLETED);
+            reviewRepository.save(review);
+
+            Review savedReview = review;
+            List<Issue> issues = aiResult.issues().stream()
+                    .map(i -> Issue.builder()
+                            .severity(IssueSeverity.valueOf(i.severity()))
+                            .lineNumber(i.lineNumber())
+                            .title(i.title())
+                            .description(i.description())
+                            .suggestion(i.suggestion())
+                            .review(savedReview)
+                            .build())
+                    .toList();
+            issueRepository.saveAll(issues);
+
+            return ReviewResponse.detail(review, issues.stream().map(IssueResponse::from).toList());
+
+        } catch (Exception e) {
+            review.setStatus(ReviewStatus.FAILED);
+            reviewRepository.save(review);
+            throw new IllegalStateException("AI inceleme başarısız: " + e.getMessage(), e);
+        }
+    }
+
+    public ReviewResponse getReview(Long id) {
+        Review review = reviewRepository.findById(id)
+                .orElseThrow(() -> new IllegalStateException("İnceleme bulunamadı: " + id));
+
+        List<IssueResponse> issues = issueRepository.findByReviewId(id).stream()
+                .map(IssueResponse::from)
+                .toList();
+
+        return ReviewResponse.detail(review, issues);
+    }
+
+    public List<ReviewResponse> getReviews() {
+        return reviewRepository.findAll().stream()
+                .map(ReviewResponse::summary)
+                .toList();
+    }
+
+    public String explainIssue(Long reviewId, Long issueId) {
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new IllegalStateException("İnceleme bulunamadı: " + reviewId));
+
+        Issue issue = issueRepository.findById(issueId)
+                .orElseThrow(() -> new IllegalStateException("Sorun bulunamadı: " + issueId));
+
+        if (!issue.getReview().getId().equals(review.getId())) {
+            throw new IllegalStateException("Bu sorun bu incelemeye ait değil");
+        }
+
+        if (issue.getExplanation() != null) {
+            return issue.getExplanation();
+        }
+
+        String explanation = aiCodeReviewService.explainIssue(review, issue);
+        issue.setExplanation(explanation);
+        issueRepository.save(issue);
+
+        return explanation;
+    }
+
+    public AiFixResponse fixIssue(Long reviewId, Long issueId) {
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new IllegalStateException("İnceleme bulunamadı: " + reviewId));
+
+        Issue issue = issueRepository.findById(issueId)
+                .orElseThrow(() -> new IllegalStateException("Sorun bulunamadı: " + issueId));
+
+        if (!issue.getReview().getId().equals(review.getId())) {
+            throw new IllegalStateException("Bu sorun bu incelemeye ait değil");
+        }
+
+        AiFix aiFix = aiFixRepository.findByIssueId(issueId)
+                .orElseGet(() -> {
+                    String fixedCode = aiCodeReviewService.fixIssue(review, issue);
+
+                    AiFix newFix = AiFix.builder()
+                            .originalSnippet(review.getCodeSnippet())
+                            .fixedSnippet(fixedCode)
+                            .issue(issue)
+                            .build();
+
+                    return aiFixRepository.save(newFix);
+                });
+
+        return AiFixResponse.from(aiFix);
+    }
+
+    public GeneratedTestResponse generateTests(Long reviewId) {
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new IllegalStateException("İnceleme bulunamadı: " + reviewId));
+
+        String testCode = aiCodeReviewService.generateTests(review);
+
+        GeneratedTest generatedTest = GeneratedTest.builder()
+                .testCode(testCode)
+                .review(review)
+                .build();
+
+        GeneratedTest saved = generatedTestRepository.save(generatedTest);
+        return GeneratedTestResponse.from(saved);
+    }
+}

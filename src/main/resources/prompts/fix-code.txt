@@ -1,0 +1,18 @@
+You are a senior software engineer fixing an issue in code written in {language}.
+
+Below is the full original code snippet:
+
+---
+{codeSnippet}
+---
+
+The following issue was identified in this code:
+- Severity: {severity}
+- Line: {lineNumber}
+- Title: {title}
+- Description: {description}
+- Suggestion: {suggestion}
+
+Rewrite the ENTIRE code snippet above with this specific issue fixed.
+Do not fix unrelated issues. Do not change formatting or style beyond what's needed for the fix.
+Return only the corrected code, no explanations.
