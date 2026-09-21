@@ -76,13 +76,3 @@ The application starts at `http://localhost:8080`. API documentation is availabl
 | POST | `/api/reviews/{reviewId}/generate-tests` | Generate JUnit tests for a review |
 
 ## Screenshots
-
-_Coming soon 
-
-## Roadmap
-
-- [x] Faz 1 — Core setup and synchronous review
-- [x] Faz 2 — Issue-based AI features (explain, fix, generate tests)
-- [x] Faz 3 — Async processing with Kafka
-- [x] Faz 4 — Quality and polish (authorization, pagination, tests, Swagger, Docker)
-- [ ] Faz 5 — Frontend (React + Monaco Editor)
