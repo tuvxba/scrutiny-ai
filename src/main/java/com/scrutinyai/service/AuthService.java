@@ -24,7 +24,7 @@ public class AuthService {
 
     public AuthResponse register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.email())) {
-            throw new IllegalArgumentException("Bu email zaten kayıtlı");
+            throw new IllegalArgumentException("Email is already in use: " + request.email());
         }
 
         User user = User.builder()
@@ -41,8 +41,7 @@ public class AuthService {
 
     public AuthResponse login(LoginRequest request) {
         authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.email(), request.password())
-        );
+                new UsernamePasswordAuthenticationToken(request.email(), request.password()));
 
         return new AuthResponse(jwtService.generateToken(request.email()));
     }

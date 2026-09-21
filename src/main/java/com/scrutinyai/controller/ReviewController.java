@@ -2,6 +2,7 @@ package com.scrutinyai.controller;
 
 import java.util.List;
 
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,6 +22,10 @@ import com.scrutinyai.service.ReviewService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.web.bind.annotation.RequestParam;
+
 @RestController
 @RequestMapping("/api/reviews")
 @RequiredArgsConstructor
@@ -36,34 +41,41 @@ public class ReviewController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ReviewResponse> getReview(@PathVariable Long id) {
-        return ResponseEntity.ok(reviewService.getReview(id));
+    public ResponseEntity<ReviewResponse> getReview(@PathVariable Long id, Authentication authentication) {
+        return ResponseEntity.ok(reviewService.getReview(id, authentication.getName()));
     }
 
     @GetMapping
-    public ResponseEntity<List<ReviewResponse>> getReviews() {
-        return ResponseEntity.ok(reviewService.getReviews());
+    public ResponseEntity<Page<ReviewResponse>> getReviews(
+            @RequestParam(required = false) String language,
+            @PageableDefault(size = 10) Pageable pageable,
+            Authentication authentication) {
+        return ResponseEntity.ok(reviewService.getReviews(authentication.getName(), language, pageable));
     }
 
     @PostMapping("/{reviewId}/issues/{issueId}/explain")
     public ResponseEntity<ExplanationResponse> explainIssue(
             @PathVariable Long reviewId,
-            @PathVariable Long issueId) {
-        String explanation = reviewService.explainIssue(reviewId, issueId);
+            @PathVariable Long issueId,
+            Authentication authentication) {
+        String explanation = reviewService.explainIssue(reviewId, issueId, authentication.getName());
         return ResponseEntity.ok(new ExplanationResponse(explanation));
     }
 
     @PostMapping("/{reviewId}/issues/{issueId}/fix")
     public ResponseEntity<AiFixResponse> fixIssue(
             @PathVariable Long reviewId,
-            @PathVariable Long issueId) {
-        AiFixResponse fix = reviewService.fixIssue(reviewId, issueId);
+            @PathVariable Long issueId,
+            Authentication authentication) {
+        AiFixResponse fix = reviewService.fixIssue(reviewId, issueId, authentication.getName());
         return ResponseEntity.ok(fix);
     }
 
     @PostMapping("/{reviewId}/generate-tests")
-    public ResponseEntity<GeneratedTestResponse> generateTests(@PathVariable Long reviewId) {
-        GeneratedTestResponse test = reviewService.generateTests(reviewId);
+    public ResponseEntity<GeneratedTestResponse> generateTests(
+            @PathVariable Long reviewId,
+            Authentication authentication) {
+        GeneratedTestResponse test = reviewService.generateTests(reviewId, authentication.getName());
         return ResponseEntity.ok(test);
     }
 }

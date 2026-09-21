@@ -10,8 +10,7 @@ public record ReviewResponse(
         String status,
         Integer score,
         String aiSummary,
-        List<IssueResponse> issues
-) {
+        List<IssueResponse> issues) {
     public static ReviewResponse summary(Review review) {
         return new ReviewResponse(review.getId(), review.getLanguage(), review.getStatus().name(),
                 review.getScore(), review.getAiSummary(), null);

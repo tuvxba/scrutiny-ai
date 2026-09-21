@@ -8,8 +8,7 @@ public record IssueResponse(
         Integer lineNumber,
         String title,
         String description,
-        String suggestion
-) {
+        String suggestion) {
     public static IssueResponse from(Issue issue) {
         return new IssueResponse(
                 issue.getId(),
@@ -17,7 +16,6 @@ public record IssueResponse(
                 issue.getLineNumber(),
                 issue.getTitle(),
                 issue.getDescription(),
-                issue.getSuggestion()
-        );
+                issue.getSuggestion());
     }
 }

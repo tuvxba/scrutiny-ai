@@ -17,12 +17,12 @@ public class ReviewEventConsumer {
 
     @KafkaListener(topics = "code-review-requested", groupId = "scrutiny-ai-review-group")
     public void handleReviewRequested(ReviewRequestedEvent event) {
-        log.info("Review işleniyor: reviewId={}", event.reviewId());
+        log.info("Review is being processed: reviewId={}", event.reviewId());
 
         try {
             reviewService.processReview(event.reviewId());
         } catch (Exception e) {
-            log.error("Review işlenirken hata oluştu: reviewId={}", event.reviewId(), e);
+            log.error("An error occurred while processing the review: reviewId={}", event.reviewId(), e);
         }
     }
 }

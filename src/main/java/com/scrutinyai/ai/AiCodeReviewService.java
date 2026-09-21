@@ -47,37 +47,36 @@ public class AiCodeReviewService {
             }
             """;
 
-
     private static final String EXPLAIN_SCHEMA_JSON = """
-        {
-          "type": "OBJECT",
-          "properties": {
-            "explanation": {"type": "STRING"}
-          },
-          "required": ["explanation"]
-        }
-        """;
+            {
+              "type": "OBJECT",
+              "properties": {
+                "explanation": {"type": "STRING"}
+              },
+              "required": ["explanation"]
+            }
+            """;
 
     private static final String FIX_SCHEMA_JSON = """
-        {
-          "type": "OBJECT",
-          "properties": {
-            "fixedCode": {"type": "STRING"}
-          },
-          "required": ["fixedCode"]
-        }
-        """;
+            {
+              "type": "OBJECT",
+              "properties": {
+                "fixedCode": {"type": "STRING"}
+              },
+              "required": ["fixedCode"]
+            }
+            """;
 
     private static final String GENERATE_TESTS_SCHEMA_JSON = """
-        {
-          "type": "OBJECT",
-          "properties": {
-            "testCode": {"type": "STRING"}
-          },
-          "required": ["testCode"]
-        }
-        """;
-    
+            {
+              "type": "OBJECT",
+              "properties": {
+                "testCode": {"type": "STRING"}
+              },
+              "required": ["testCode"]
+            }
+            """;
+
     public AiReviewResult reviewCode(String language, String code) {
         String prompt = buildPrompt(language, code);
         JsonNode schema = readSchema(RESPONSE_SCHEMA_JSON);
@@ -88,7 +87,7 @@ public class AiCodeReviewService {
             JsonNode result = objectMapper.readTree(rawJson);
             return parseResult(result);
         } catch (IOException e) {
-            throw new IllegalStateException("Gemini cevabı parse edilemedi: " + rawJson, e);
+            throw new IllegalStateException("Failed to parse Gemini response: " + rawJson, e);
         }
     }
 
@@ -102,7 +101,7 @@ public class AiCodeReviewService {
             JsonNode result = objectMapper.readTree(rawJson);
             return result.path("explanation").asText();
         } catch (IOException e) {
-            throw new IllegalStateException("Gemini cevabı parse edilemedi: " + rawJson, e);
+            throw new IllegalStateException("Failed to parse Gemini response: " + rawJson, e);
         }
     }
 
@@ -116,7 +115,7 @@ public class AiCodeReviewService {
             JsonNode result = objectMapper.readTree(rawJson);
             return result.path("fixedCode").asText();
         } catch (IOException e) {
-            throw new IllegalStateException("Gemini cevabı parse edilemedi: " + rawJson, e);
+            throw new IllegalStateException("Failed to parse Gemini response: " + rawJson, e);
         }
     }
 
@@ -130,7 +129,7 @@ public class AiCodeReviewService {
             JsonNode result = objectMapper.readTree(rawJson);
             return result.path("testCode").asText();
         } catch (IOException e) {
-            throw new IllegalStateException("Gemini cevabı parse edilemedi: " + rawJson, e);
+            throw new IllegalStateException("Failed to parse Gemini response: " + rawJson, e);
         }
     }
 
@@ -138,22 +137,20 @@ public class AiCodeReviewService {
         try {
             String template = new String(
                     new ClassPathResource("prompts/generate-tests.txt").getInputStream().readAllBytes(),
-                    StandardCharsets.UTF_8
-            );
+                    StandardCharsets.UTF_8);
             return template
                     .replace("{language}", review.getLanguage())
                     .replace("{codeSnippet}", review.getCodeSnippet());
         } catch (IOException e) {
-            throw new IllegalStateException("Prompt dosyası okunamadı", e);
+            throw new IllegalStateException("Failed to read prompt file", e);
         }
     }
-    
+
     private String buildFixPrompt(Review review, Issue issue) {
         try {
             String template = new String(
                     new ClassPathResource("prompts/fix-code.txt").getInputStream().readAllBytes(),
-                    StandardCharsets.UTF_8
-            );
+                    StandardCharsets.UTF_8);
             return template
                     .replace("{language}", review.getLanguage())
                     .replace("{codeSnippet}", review.getCodeSnippet())
@@ -163,7 +160,7 @@ public class AiCodeReviewService {
                     .replace("{description}", issue.getDescription())
                     .replace("{suggestion}", issue.getSuggestion() != null ? issue.getSuggestion() : "");
         } catch (IOException e) {
-            throw new IllegalStateException("Prompt dosyası okunamadı", e);
+            throw new IllegalStateException("Failed to read prompt file", e);
         }
     }
 
@@ -171,11 +168,10 @@ public class AiCodeReviewService {
         try {
             String template = new String(
                     new ClassPathResource("prompts/code-review.txt").getInputStream().readAllBytes(),
-                    StandardCharsets.UTF_8
-            );
+                    StandardCharsets.UTF_8);
             return template.replace("{language}", language).replace("{code}", code);
         } catch (IOException e) {
-            throw new IllegalStateException("Prompt dosyası okunamadı", e);
+            throw new IllegalStateException("Failed to read prompt file", e);
         }
     }
 
@@ -183,8 +179,7 @@ public class AiCodeReviewService {
         try {
             String template = new String(
                     new ClassPathResource("prompts/explain-issue.txt").getInputStream().readAllBytes(),
-                    StandardCharsets.UTF_8
-            );
+                    StandardCharsets.UTF_8);
             return template
                     .replace("{language}", review.getLanguage())
                     .replace("{codeSnippet}", review.getCodeSnippet())
@@ -193,15 +188,15 @@ public class AiCodeReviewService {
                     .replace("{title}", issue.getTitle())
                     .replace("{description}", issue.getDescription());
         } catch (IOException e) {
-            throw new IllegalStateException("Prompt dosyası okunamadı", e);
+            throw new IllegalStateException("Failed to read prompt file", e);
         }
     }
-    
+
     private JsonNode readSchema(String schemaJson) {
         try {
             return objectMapper.readTree(schemaJson);
         } catch (IOException e) {
-            throw new IllegalStateException("Response schema parse edilemedi", e);
+            throw new IllegalStateException("Failed to parse response schema", e);
         }
     }
 
@@ -216,8 +211,7 @@ public class AiCodeReviewService {
                     issueNode.hasNonNull("lineNumber") ? issueNode.path("lineNumber").asInt() : null,
                     issueNode.path("title").asText(),
                     issueNode.path("description").asText(),
-                    issueNode.hasNonNull("suggestion") ? issueNode.path("suggestion").asText() : null
-            ));
+                    issueNode.hasNonNull("suggestion") ? issueNode.path("suggestion").asText() : null));
         }
 
         return new AiReviewResult(score, summary, issues);

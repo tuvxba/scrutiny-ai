@@ -45,7 +45,7 @@ public class AiClient {
         try {
             requestJson = objectMapper.writeValueAsString(requestBody);
         } catch (Exception e) {
-            throw new IllegalStateException("Gemini isteği JSON'a çevrilemedi", e);
+            throw new IllegalStateException("Failed to convert Gemini request to JSON", e);
         }
 
         String responseJson = webClient.post()
@@ -54,13 +54,12 @@ public class AiClient {
                 .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
                 .bodyValue(requestJson)
                 .retrieve()
-                .onStatus(status -> status.isError(), clientResponse ->
-                        clientResponse.bodyToMono(String.class)
-                                .flatMap(body -> {
-                                    log.error("Gemini API hatası [{}]: {}", clientResponse.statusCode(), body);
-                                    return reactor.core.publisher.Mono.error(
-                                            new IllegalStateException("Gemini API hatası: " + body));
-                                }))
+                .onStatus(status -> status.isError(), clientResponse -> clientResponse.bodyToMono(String.class)
+                        .flatMap(body -> {
+                            log.error("Gemini API error [{}]: {}", clientResponse.statusCode(), body);
+                            return reactor.core.publisher.Mono.error(
+                                    new IllegalStateException("Gemini API error: " + body));
+                        }))
                 .bodyToMono(String.class)
                 .block();
 
@@ -68,7 +67,7 @@ public class AiClient {
         try {
             response = objectMapper.readTree(responseJson);
         } catch (Exception e) {
-            throw new IllegalStateException("Gemini cevabı parse edilemedi: " + responseJson, e);
+            throw new IllegalStateException("Failed to parse Gemini response: " + responseJson, e);
         }
 
         return extractText(response);
@@ -76,13 +75,13 @@ public class AiClient {
 
     private String extractText(JsonNode response) {
         if (response == null) {
-            throw new IllegalStateException("Gemini'den boş cevap geldi");
+            throw new IllegalStateException("Failed to receive a valid response from Gemini");
         }
 
         JsonNode candidates = response.path("candidates");
         if (!candidates.isArray() || candidates.isEmpty()) {
-            log.error("Gemini cevabında candidate bulunamadı: {}", response);
-            throw new IllegalStateException("Gemini'den geçerli bir cevap alınamadı");
+            log.error("Failed to find valid candidate in Gemini response: {}", response);
+            throw new IllegalStateException("Failed to receive a valid response from Gemini");
         }
 
         return candidates.get(0).path("content").path("parts").get(0).path("text").asText();
