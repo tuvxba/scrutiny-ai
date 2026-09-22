@@ -62,17 +62,32 @@ docker compose up --build
 
 The application starts at `http://localhost:8080`. API documentation is available at `http://localhost:8080/swagger-ui.html`.
 
+### Frontend
+
+The React + Monaco demo lives in `frontend/`. With the API running:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Open `http://localhost:5173`. Vite proxies `/api` to `http://localhost:8080`.
+
 ### API Overview
 
 | Method | Endpoint | Description |
 |---|---|---|
 | POST | `/api/auth/register` | Register a new user |
 | POST | `/api/auth/login` | Log in and receive a JWT |
-| POST | `/api/reviews` | Submit code for review (async) |
-| GET | `/api/reviews/{id}` | Get a review by id |
-| GET | `/api/reviews` | List reviews (paginated, filterable by language) |
-| POST | `/api/reviews/{reviewId}/issues/{issueId}/explain` | Get an AI explanation for an issue |
-| POST | `/api/reviews/{reviewId}/issues/{issueId}/fix` | Get an AI-suggested fix for an issue |
-| POST | `/api/reviews/{reviewId}/generate-tests` | Generate JUnit tests for a review |
+| POST | `/api/reviews` | Submit code for review. Guests get a synchronous result (not persisted). Signed-in users get async processing + history. |
+| GET | `/api/reviews/{id}` | Get a saved review by id (authenticated) |
+| GET | `/api/reviews` | List reviews (paginated, filterable by language; authenticated) |
+| POST | `/api/reviews/{reviewId}/issues/{issueId}/explain` | Explain an issue on a saved review (authenticated) |
+| POST | `/api/reviews/{reviewId}/issues/{issueId}/fix` | Suggest a fix for a saved issue (authenticated) |
+| POST | `/api/reviews/{reviewId}/generate-tests` | Generate tests for a saved review (authenticated) |
+| POST | `/api/guest/explain` | Explain an issue without persisting (public) |
+| POST | `/api/guest/fix` | Suggest a fix without persisting (public) |
+| POST | `/api/guest/generate-tests` | Generate tests without persisting (public) |
 
 ## Screenshots

@@ -1,9 +1,8 @@
 package com.scrutinyai.controller;
 
-import java.util.List;
-
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -37,7 +36,7 @@ public class ReviewController {
     public ResponseEntity<ReviewResponse> createReview(
             @Valid @RequestBody ReviewRequest request,
             Authentication authentication) {
-        return ResponseEntity.ok(reviewService.createReview(request, authentication.getName()));
+        return ResponseEntity.ok(reviewService.createReview(request, emailIfAuthenticated(authentication)));
     }
 
     @GetMapping("/{id}")
@@ -77,5 +76,14 @@ public class ReviewController {
             Authentication authentication) {
         GeneratedTestResponse test = reviewService.generateTests(reviewId, authentication.getName());
         return ResponseEntity.ok(test);
+    }
+
+    private static String emailIfAuthenticated(Authentication authentication) {
+        if (authentication == null
+                || !authentication.isAuthenticated()
+                || authentication instanceof AnonymousAuthenticationToken) {
+            return null;
+        }
+        return authentication.getName();
     }
 }

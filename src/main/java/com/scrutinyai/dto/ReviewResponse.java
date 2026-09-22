@@ -10,14 +10,15 @@ public record ReviewResponse(
         String status,
         Integer score,
         String aiSummary,
+        String codeSnippet,
         List<IssueResponse> issues) {
     public static ReviewResponse summary(Review review) {
         return new ReviewResponse(review.getId(), review.getLanguage(), review.getStatus().name(),
-                review.getScore(), review.getAiSummary(), null);
+                review.getScore(), review.getAiSummary(), null, null);
     }
 
     public static ReviewResponse detail(Review review, List<IssueResponse> issues) {
         return new ReviewResponse(review.getId(), review.getLanguage(), review.getStatus().name(),
-                review.getScore(), review.getAiSummary(), issues);
+                review.getScore(), review.getAiSummary(), review.getCodeSnippet(), issues);
     }
 }

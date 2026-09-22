@@ -11,11 +11,15 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.scrutinyai.ai.AiCodeReviewService;
+import com.scrutinyai.ai.AiIssueResult;
+import com.scrutinyai.ai.AiReviewResult;
 import com.scrutinyai.dto.ReviewRequest;
 import com.scrutinyai.dto.ReviewResponse;
 import com.scrutinyai.entity.Review;
@@ -28,11 +32,6 @@ import com.scrutinyai.repository.GeneratedTestRepository;
 import com.scrutinyai.repository.IssueRepository;
 import com.scrutinyai.repository.ReviewRepository;
 import com.scrutinyai.repository.UserRepository;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-
-import com.scrutinyai.dto.ReviewRequest;
 
 @ExtendWith(MockitoExtension.class)
 class ReviewServiceTest {
@@ -135,5 +134,24 @@ class ReviewServiceTest {
 
         assertThat(result.status()).isEqualTo("PENDING");
         verify(reviewEventProducer).publishReviewRequested(1L);
+        verifyNoInteractions(aiCodeReviewService);
+    }
+
+    @Test
+    void createReview_guestRunsAiSynchronouslyWithoutPersisting() {
+        ReviewRequest request = new ReviewRequest("java", "public void test() {}");
+        when(aiCodeReviewService.reviewCode("java", "public void test() {}"))
+                .thenReturn(new AiReviewResult(72, "Off-by-one risk", List.of(
+                        new AiIssueResult("HIGH", 4, "Off-by-one", "Loop bound is inclusive", "Use < size"))));
+
+        ReviewResponse result = reviewService.createReview(request, null);
+
+        assertThat(result.id()).isNull();
+        assertThat(result.status()).isEqualTo("COMPLETED");
+        assertThat(result.score()).isEqualTo(72);
+        assertThat(result.issues()).hasSize(1);
+        assertThat(result.issues().get(0).id()).isNull();
+        verify(reviewRepository, never()).save(any());
+        verifyNoInteractions(reviewEventProducer, userRepository);
     }
 }

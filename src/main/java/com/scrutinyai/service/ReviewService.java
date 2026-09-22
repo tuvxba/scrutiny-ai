@@ -9,6 +9,8 @@ import com.scrutinyai.ai.AiCodeReviewService;
 import com.scrutinyai.ai.AiReviewResult;
 import com.scrutinyai.dto.AiFixResponse;
 import com.scrutinyai.dto.GeneratedTestResponse;
+import com.scrutinyai.dto.GuestCodeRequest;
+import com.scrutinyai.dto.GuestIssueRequest;
 import com.scrutinyai.dto.IssueResponse;
 import com.scrutinyai.dto.ReviewRequest;
 import com.scrutinyai.dto.ReviewResponse;
@@ -43,6 +45,10 @@ public class ReviewService {
         private final ReviewEventProducer reviewEventProducer;
 
         public ReviewResponse createReview(ReviewRequest request, String userEmail) {
+                if (userEmail == null) {
+                        return createGuestReview(request);
+                }
+
                 User user = userRepository.findByEmail(userEmail)
                                 .orElseThrow(() -> new IllegalStateException("User not found: " + userEmail));
 
@@ -57,6 +63,27 @@ public class ReviewService {
                 reviewEventProducer.publishReviewRequested(review.getId());
 
                 return ReviewResponse.detail(review, List.of());
+        }
+
+        private ReviewResponse createGuestReview(ReviewRequest request) {
+                AiReviewResult aiResult = aiCodeReviewService.reviewCode(request.language(), request.codeSnippet());
+                List<IssueResponse> issues = aiResult.issues().stream()
+                                .map(i -> new IssueResponse(
+                                                null,
+                                                i.severity(),
+                                                i.lineNumber(),
+                                                i.title(),
+                                                i.description(),
+                                                i.suggestion()))
+                                .toList();
+                return new ReviewResponse(
+                                null,
+                                request.language(),
+                                ReviewStatus.COMPLETED.name(),
+                                aiResult.score(),
+                                aiResult.summary(),
+                                request.codeSnippet(),
+                                issues);
         }
 
         @Transactional(readOnly = true)
@@ -161,6 +188,43 @@ public class ReviewService {
 
                 GeneratedTest saved = generatedTestRepository.save(generatedTest);
                 return GeneratedTestResponse.from(saved);
+        }
+
+        public String explainGuestIssue(GuestIssueRequest request) {
+                return aiCodeReviewService.explainIssue(toTransientReview(request), toTransientIssue(request));
+        }
+
+        public AiFixResponse fixGuestIssue(GuestIssueRequest request) {
+                String fixedCode = aiCodeReviewService.fixIssue(toTransientReview(request), toTransientIssue(request));
+                return new AiFixResponse(null, request.codeSnippet(), fixedCode, false);
+        }
+
+        public GeneratedTestResponse generateGuestTests(GuestCodeRequest request) {
+                Review review = Review.builder()
+                                .language(request.language())
+                                .codeSnippet(request.codeSnippet())
+                                .build();
+                return new GeneratedTestResponse(null, aiCodeReviewService.generateTests(review));
+        }
+
+        private static Review toTransientReview(GuestIssueRequest request) {
+                return Review.builder()
+                                .language(request.language())
+                                .codeSnippet(request.codeSnippet())
+                                .build();
+        }
+
+        private static Issue toTransientIssue(GuestIssueRequest request) {
+                Review review = toTransientReview(request);
+                Issue issue = Issue.builder()
+                                .severity(IssueSeverity.valueOf(request.severity()))
+                                .lineNumber(request.lineNumber())
+                                .title(request.title())
+                                .description(request.description())
+                                .suggestion(request.suggestion())
+                                .review(review)
+                                .build();
+                return issue;
         }
 
         public void processReview(Long reviewId) {

@@ -1,4 +1,5 @@
 services:
+
   postgres:
     image: postgres:16
     environment:
@@ -18,23 +19,26 @@ services:
       KAFKA_NODE_ID: 1
       KAFKA_PROCESS_ROLES: broker,controller
       KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
-      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-    app:
-      build: .
-      ports:
-        - "8080:8080"
-      environment:
-        SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/scrutinyai
-        SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
-        DB_PASSWORD: ${DB_PASSWORD}
-        JWT_SECRET: ${JWT_SECRET}
-        AI_API_KEY: ${AI_API_KEY}
-      depends_on:
-        - postgres
-        - kafka
+      KAFKA_OFFSETS_TOPIC_NUM_PARTITIONS: 1
+
+  app:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/scrutinyai
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      AI_API_KEY: ${AI_API_KEY}
+    depends_on:
+      - postgres
+      - kafka
+
 volumes:
   postgres-data:
