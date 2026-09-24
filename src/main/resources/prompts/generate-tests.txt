@@ -12,3 +12,8 @@ Write a complete JUnit 5 test class that covers:
 3. Any error/exception scenarios relevant to this code
 
 Use Mockito for mocking dependencies if needed. Return only the Java test code, no explanations.
+
+Formatting requirements for the returned code:
+- Use real line breaks and proper indentation throughout, consistent with standard Java style.
+- Each statement, annotation, and method must be on its own line. Never compress multiple statements, test methods, or assertions onto a single line.
+- The output must be valid, properly indented Java code that a human could read directly without reformatting.

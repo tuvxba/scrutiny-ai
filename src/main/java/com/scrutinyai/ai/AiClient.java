@@ -3,10 +3,17 @@ package com.scrutinyai.ai;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
+
+import com.scrutinyai.exception.GeminiUnavailableException;
 
 @Slf4j
 @Component
@@ -28,6 +35,7 @@ public class AiClient {
         this.model = model;
     }
 
+    @Retryable(retryFor = GeminiUnavailableException.class, maxAttempts = 3, backoff = @Backoff(delay = 1500, multiplier = 2))
     public String generateStructuredContent(String prompt, JsonNode responseSchema) {
         ObjectNode content = objectMapper.createObjectNode();
         content.put("role", "user");
@@ -54,9 +62,15 @@ public class AiClient {
                 .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
                 .bodyValue(requestJson)
                 .retrieve()
-                .onStatus(status -> status.isError(), clientResponse -> clientResponse.bodyToMono(String.class)
+                .onStatus(HttpStatusCode::isError, clientResponse -> clientResponse.bodyToMono(String.class)
                         .flatMap(body -> {
                             log.error("Gemini API error [{}]: {}", clientResponse.statusCode(), body);
+
+                            HttpStatusCode status = clientResponse.statusCode();
+                            if (status.value() == 503 || status.value() == 429) {
+                                return reactor.core.publisher.Mono.error(
+                                        new GeminiUnavailableException("Gemini API unavailable: " + body));
+                            }
                             return reactor.core.publisher.Mono.error(
                                     new IllegalStateException("Gemini API error: " + body));
                         }))

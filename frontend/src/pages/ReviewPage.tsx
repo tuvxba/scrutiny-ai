@@ -52,7 +52,14 @@ export function ReviewPage() {
         navigate(`/reviews/${newReview.id}`);
       } else {
         sessionStorage.setItem(GUEST_REVIEW_KEY, JSON.stringify(newReview));
-        navigate("/reviews/preview");
+        // State'i doğrudan güncelle — aynı route'a navigate etmek yeniden mount tetiklemiyor
+        setReview(newReview);
+        setSelectedKey(null);
+        setExplanations({});
+        setTests(null);
+        if (!guestMode) {
+          navigate("/reviews/preview");
+        }
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Apply failed");
