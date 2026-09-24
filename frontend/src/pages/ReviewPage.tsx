@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { api } from "../api";
 import type { AiFix, Issue, Review } from "../types";
-import { GUEST_REVIEW_KEY, isPersistedReview, monacoLanguage } from "../types";
+import { GUEST_REVIEW_KEY, LANGUAGES, isPersistedReview, monacoLanguage } from "../types";
 import { useNavigate } from "react-router-dom";
 
 type CodeEditor = {
@@ -37,6 +37,8 @@ export function ReviewPage() {
   const [tests, setTests] = useState<string | null>(null);
   const [busyFix, setBusyFix] = useState(false);
   const [busyTests, setBusyTests] = useState(false);
+  const [selectedLanguage, setSelectedLanguage] = useState<string | null>(null);
+  const [busyLanguageChange, setBusyLanguageChange] = useState(false);
   const monacoRef = useRef<CodeEditor | null>(null);
   const decorations = useRef<string[]>([]);
 
@@ -65,6 +67,29 @@ export function ReviewPage() {
     } finally {
       setApplying(false);
       setFix(null);
+    }
+  }
+
+  async function changeLanguage() {
+    if (!review) return;
+    const targetLanguage = selectedLanguage ?? review.language;
+    setBusyLanguageChange(true);
+    try {
+      const newReview = await api.createReview(targetLanguage, review.codeSnippet ?? "");
+      if (newReview.id != null) {
+        navigate(`/reviews/${newReview.id}`);
+      } else {
+        sessionStorage.setItem(GUEST_REVIEW_KEY, JSON.stringify(newReview));
+        setReview(newReview);
+        setSelectedLanguage(null);
+        setSelectedKey(null);
+        setExplanations({});
+        setTests(null);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Language change failed");
+    } finally {
+      setBusyLanguageChange(false);
     }
   }
 
@@ -194,7 +219,11 @@ export function ReviewPage() {
   }
   if (!review) return <p style={{ color: "var(--muted)" }}>Loading review…</p>;
 
-  const issues = review.issues ?? [];
+  const severityOrder: Record<string, number> = { HIGH: 0, MEDIUM: 1, LOW: 2 };
+  const issues = [...(review.issues ?? [])].sort(
+    (a, b) => (severityOrder[a.severity.toUpperCase()] ?? 3) - (severityOrder[b.severity.toUpperCase()] ?? 3),
+  );
+  const hasLanguageMismatch = issues.some((issue) => issue.title === "Language mismatch");
   const pending = review.status === "PENDING" || review.status === "PROCESSING";
   const persisted = isPersistedReview(review);
 
@@ -215,8 +244,25 @@ export function ReviewPage() {
 
       {!persisted && (
         <div className="card status-banner">
-          This result is not stored. Sign in before the next run to keep history. Explain, fix, and
-          tests still work on this page.
+          This result is not stored. Sign in before the next run to keep history.
+        </div>
+      )}
+      {hasLanguageMismatch && (
+        <div className="card status-banner">
+          Wrong language selected. Pick the correct one and re-run:
+          <select
+            className="select"
+            value={selectedLanguage ?? review.language}
+            onChange={(e) => setSelectedLanguage(e.target.value)}
+            style={{ marginLeft: 8 }}
+          >
+            {LANGUAGES.map((lang) => (
+              <option key={lang.id} value={lang.id}>{lang.label}</option>
+            ))}
+          </select>
+          <button className="btn secondary" onClick={changeLanguage} disabled={busyLanguageChange} style={{ marginLeft: 8 }}>
+            {busyLanguageChange ? "Re-running…" : "Re-run review"}
+          </button>
         </div>
       )}
       {pending && (
@@ -281,7 +327,7 @@ export function ReviewPage() {
           <div className="card score-card" style={{ marginBottom: 14 }}>
             <ScoreRing score={review.score} />
             <div className="score-meta">
-              <span className={`badge ${review.status}`}>{review.status}</span>
+              <span className={`badge ${review.status}`} style={{ marginBottom: 8, display: "inline-block" }}>{review.status}</span>
               <h3>{review.score == null ? "Awaiting score" : "Quality score"}</h3>
               <p style={{ margin: 0, color: "var(--muted)" }}>
                 {review.aiSummary || "The model summary appears here once analysis finishes."}
@@ -391,7 +437,7 @@ function ScoreRing({ score }: { score: number | null }) {
   const color = value >= 80 ? "#5ee0b5" : value >= 50 ? "#e8a54b" : "#ff6b7a";
 
   return (
-    <svg className="score-ring" viewBox="0 0 108 108">
+    <svg className="score-ring" viewBox="0 0 108 108" width={108} height={108} style={{ flexShrink: 0 }}>
       <circle cx="54" cy="54" r={r} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="8" />
       <circle
         cx="54"

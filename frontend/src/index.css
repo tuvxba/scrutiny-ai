@@ -285,6 +285,27 @@ a {
   font-size: 1.7rem;
 }
 
+
+.welcome-message span {
+  color: var(--copper);
+}
+.home-panel-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: min(460px, 100%);
+}
+
+.welcome-message {
+  font-family: var(--serif);
+  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  line-height: 0.98;
+  letter-spacing: -0.05em;
+  color: var(--text);
+  margin: 0 0 28px;
+  align-self: flex-start;
+}
+
 .home-choices {
   width: min(460px, 100%);
   display: flex;
@@ -640,6 +661,7 @@ a {
 }
 
 @media (max-width: 980px) {
+
   .app-shell,
   .auth-layout,
   .review-grid {

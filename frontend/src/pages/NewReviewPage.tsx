@@ -55,7 +55,7 @@ export function NewReviewPage() {
           <p>
             {token
               ? "Paste a snippet. Completed reviews are saved to your history."
-              : "No account needed. Guest reviews are not saved — sign in if you want history."}
+              : "No account needed. Guest reviews are not saved in history — sign in if you want history."}
           </p>
         </div>
         <button className="btn" onClick={submit} disabled={busy}>

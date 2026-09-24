@@ -28,40 +28,43 @@ export function HomePage() {
         <p className="mono">score · issues · explain · fix · tests</p>
       </section>
       <section className="auth-panel">
-        <div className="home-choices">
-          <Link className="choice-card primary" to="/review">
-            <span className="choice-icon">
-              <Play size={20} />
-            </span>
-            <span>
-              <strong>Start review</strong>
-              <em>{token ? "Open the editor and paste a snippet." : "No account needed. Guest runs are not saved."}</em>
-            </span>
-            <ArrowRight size={18} />
-          </Link>
-          {token ? (
-            <Link className="choice-card" to="/history">
+        <div className="home-panel-content">
+          {token && <p className="welcome-message">Welcome back!</p>}
+          <div className="home-choices">
+            <Link className="choice-card primary" to="/review">
               <span className="choice-icon">
-                <History size={20} />
+                <Play size={20} />
               </span>
               <span>
-                <strong>Review history</strong>
-                <em>Open saved scores, issues, and past snippets.</em>
+                <strong>Start review</strong>
+                <em>{token ? "Open the editor and paste a snippet." : "No account needed. Guest runs are not saved in history."}</em>
               </span>
               <ArrowRight size={18} />
             </Link>
-          ) : (
-            <Link className="choice-card" to="/login">
-              <span className="choice-icon">
-                <LogIn size={20} />
-              </span>
-              <span>
-                <strong>Sign in</strong>
-                <em>Keep reviews in history and return to them later.</em>
-              </span>
-              <ArrowRight size={18} />
-            </Link>
-          )}
+            {token ? (
+              <Link className="choice-card" to="/history">
+                <span className="choice-icon">
+                  <History size={20} />
+                </span>
+                <span>
+                  <strong>Review history</strong>
+                  <em>Open saved scores, issues, and past snippets.</em>
+                </span>
+                <ArrowRight size={18} />
+              </Link>
+            ) : (
+              <Link className="choice-card" to="/login">
+                <span className="choice-icon">
+                  <LogIn size={20} />
+                </span>
+                <span>
+                  <strong>Sign in</strong>
+                  <em>Keep reviews in history and return to them later.</em>
+                </span>
+                <ArrowRight size={18} />
+              </Link>
+            )}
+          </div>
         </div>
       </section>
     </div>
