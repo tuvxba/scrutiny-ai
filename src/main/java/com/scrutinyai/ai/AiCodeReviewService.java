@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
@@ -77,6 +78,16 @@ public class AiCodeReviewService {
             }
             """;
 
+    private static final Map<String, String> TEST_FRAMEWORKS = Map.ofEntries(
+            Map.entry("java", "JUnit 5 (with Mockito for mocking)"),
+            Map.entry("kotlin", "JUnit 5 with Kotlin test idioms (with MockK for mocking)"),
+            Map.entry("javascript", "Jest"),
+            Map.entry("typescript", "Jest with TypeScript"),
+            Map.entry("python", "pytest"),
+            Map.entry("csharp", "xUnit (with Moq for mocking)"),
+            Map.entry("go", "the standard library's testing package (with table-driven tests)"),
+            Map.entry("sql", "a set of test queries with expected result assertions, described in comments"));
+
     public AiReviewResult reviewCode(String language, String code) {
         String prompt = buildPrompt(language, code);
         JsonNode schema = readSchema(RESPONSE_SCHEMA_JSON);
@@ -140,10 +151,15 @@ public class AiCodeReviewService {
                     StandardCharsets.UTF_8);
             return template
                     .replace("{language}", review.getLanguage())
+                    .replace("{testFramework}", resolveTestFramework(review.getLanguage()))
                     .replace("{codeSnippet}", review.getCodeSnippet());
         } catch (IOException e) {
             throw new IllegalStateException("Failed to read prompt file", e);
         }
+    }
+
+    private String resolveTestFramework(String language) {
+        return TEST_FRAMEWORKS.getOrDefault(language.toLowerCase(), "an appropriate testing framework for " + language);
     }
 
     private String buildFixPrompt(Review review, Issue issue) {

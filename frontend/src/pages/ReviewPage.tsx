@@ -52,7 +52,6 @@ export function ReviewPage() {
         navigate(`/reviews/${newReview.id}`);
       } else {
         sessionStorage.setItem(GUEST_REVIEW_KEY, JSON.stringify(newReview));
-        // State'i doğrudan güncelle — aynı route'a navigate etmek yeniden mount tetiklemiyor
         setReview(newReview);
         setSelectedKey(null);
         setExplanations({});
