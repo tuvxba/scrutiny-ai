@@ -36,7 +36,7 @@ AI-powered code review tool. Paste a code snippet and get a quality score, a lis
 
 ### Explain issue
 
-<img src="docs/screenshots/explain-review.png" width="450"/>
+<img src="docs/screenshots/explain-issue.png" width="450"/>
 
 ## Tech Stack
 
