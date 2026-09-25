@@ -18,6 +18,25 @@ AI-powered code review tool. Paste a code snippet and get a quality score, a lis
 
 ## Screenshots
 
+### Home page
+
+![Home page](docs/screenshots/home-page.png)
+
+### Guest code review
+
+![Guest code review](docs/screenshots/guest-code-review.png)
+
+### Review result
+
+![Review result](docs/screenshots/review-result.png)
+
+### Fix with AI
+
+![Fix with AI](docs/screenshots/fix-with-ai.png)
+
+### Explain issue
+
+<img src="docs/screenshots/explain-review.png" width="450"/>
 
 ## Tech Stack
 
@@ -57,7 +76,21 @@ flowchart LR
 
 ### Environment Variables
 
-Copy `.env.example` to `.env` and fill in your own values:
+Copy `.env.example` to `.env` and fill in your own values.
+
+| Variable | Required | Description |
+|---|---|---|
+| `DB_PASSWORD` | Yes | PostgreSQL password (used by both `postgres` and `app` services in Docker Compose) |
+| `JWT_SECRET` | Yes | Secret key used to sign JWTs |
+| `AI_API_KEY` | Yes | Gemini API key |
+| `DB_URL` | No | Overrides the datasource URL (defaults to the local Docker Postgres) — used for cloud deployments |
+| `DB_USERNAME` | No | Overrides the datasource username (defaults to `postgres`) |
+| `KAFKA_BOOTSTRAP_SERVERS` | No | Overrides Kafka bootstrap servers (defaults to local Docker Kafka) — used for cloud deployments |
+| `KAFKA_SECURITY_PROTOCOL` | No | Kafka security protocol, e.g. `SASL_SSL` for managed cloud Kafka |
+| `KAFKA_SASL_MECHANISM` | No | SASL mechanism, e.g. `SCRAM-SHA-256` |
+| `KAFKA_SASL_JAAS_CONFIG` | No | SASL JAAS config string (contains Kafka username/password) |
+| `KAFKA_TRUSTSTORE_LOCATION` | No | Path to the Kafka SSL truststore |
+| `KAFKA_TRUSTSTORE_PASSWORD` | No | Password for the Kafka SSL truststore |
 
 ```
 DB_PASSWORD=your_postgres_password
@@ -83,7 +116,9 @@ npm install
 npm run dev
 ```
 
-Open `http://localhost:5173`. Vite proxies `/api` to `http://localhost:8080`.
+Open `http://localhost:5173`. Vite proxies `/api` to `http://localhost:8080` by default.
+
+To point the frontend at a different backend (e.g. a deployed instance), set `VITE_API_URL` in `frontend/.env`.
 
 ### API Overview
 
