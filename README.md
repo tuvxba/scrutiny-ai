@@ -34,9 +34,14 @@ AI-powered code review tool. Paste a code snippet and get a quality score, a lis
 
 ![Fix with AI](docs/screenshots/fix-with-ai.png)
 
-### Explain issue
+### Explain issue & Generate tests
 
-<img src="docs/screenshots/explain-issue.png" width="450"/>
+<table>
+  <tr>
+    <td><img src="docs/screenshots/explain-review.png" width="400"/></td>
+    <td><img src="docs/screenshots/generate-test.png" width="400"/></td>
+  </tr>
+</table>
 
 ## Tech Stack
 
