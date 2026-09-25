@@ -2,6 +2,12 @@
 
 AI-powered code review tool. Paste a code snippet and get a quality score, a list of issues, natural-language explanations, automated fix suggestions, and generated JUnit tests.
 
+## Live Demo
+
+[https://scrutiny-ai-five.vercel.app/](https://scrutiny-ai-five.vercel.app/)
+
+> The backend runs on Render's free tier and spins down after periods of inactivity. The first request may take a couple of minutes while it wakes up — subsequent requests are fast.
+
 ## Features
 
 - JWT-based authentication (register/login)
