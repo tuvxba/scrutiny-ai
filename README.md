@@ -38,7 +38,7 @@ AI-powered code review tool. Paste a code snippet and get a quality score, a lis
 
 <table>
   <tr>
-    <td><img src="docs/screenshots/explain-review.png" width="400"/></td>
+    <td><img src="docs/screenshots/explain-issue.png" width="400"/></td>
     <td><img src="docs/screenshots/generate-test.png" width="400"/></td>
   </tr>
 </table>
