@@ -10,6 +10,9 @@ AI-powered code review tool. Paste a code snippet and get a quality score, a lis
 - Review history with pagination and language filtering
 - OpenAPI/Swagger documentation
 
+## Screenshots
+
+
 ## Tech Stack
 
 | Layer | Technology |
@@ -50,15 +53,17 @@ flowchart LR
 
 Copy `.env.example` to `.env` and fill in your own values:
 
+```
 DB_PASSWORD=your_postgres_password
 JWT_SECRET=your_jwt_secret_key
 AI_API_KEY=your_gemini_api_key
-
+```
 
 ### Run
 
+```bash
 docker compose up --build
-
+```
 
 The application starts at `http://localhost:8080`. API documentation is available at `http://localhost:8080/swagger-ui.html`.
 
@@ -89,5 +94,3 @@ Open `http://localhost:5173`. Vite proxies `/api` to `http://localhost:8080`.
 | POST | `/api/guest/explain` | Explain an issue without persisting (public) |
 | POST | `/api/guest/fix` | Suggest a fix without persisting (public) |
 | POST | `/api/guest/generate-tests` | Generate tests without persisting (public) |
-
-## Screenshots
