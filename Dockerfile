@@ -19,5 +19,6 @@ COPY --from=build /app/target/*.jar app.jar
 COPY --from=build /app/src/main/resources/kafka/kafka-truststore.jks /app/kafka-truststore.jks
 
 EXPOSE 8080
-
+RUN groupadd --system app && useradd --system --gid app --no-create-home app
+USER app
 ENTRYPOINT ["java", "-jar", "app.jar"]
