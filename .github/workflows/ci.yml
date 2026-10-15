@@ -8,6 +8,29 @@ on:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: scrutinyai
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: ci-password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d scrutinyai -h localhost"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+
+    env:
+      DB_URL: jdbc:postgresql://localhost:5432/scrutinyai
+      DB_PASSWORD: ci-password
+      JWT_SECRET: ci-only-dummy-secret-at-least-32-characters-long
+      AI_API_KEY: dummy
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: localhost:9092
+
     steps:
       - name: Kodu indir
         uses: actions/checkout@v7
@@ -18,10 +41,8 @@ jobs:
           distribution: temurin
           java-version: '25'
           cache: maven
-      
+
       - name: Derle ve test et
         run: |
           chmod +x mvnw
           ./mvnw -B verify
-
-    
